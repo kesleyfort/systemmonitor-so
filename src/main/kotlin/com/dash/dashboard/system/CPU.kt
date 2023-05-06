@@ -1,13 +1,21 @@
 package com.dash.dashboard.system
 
-import com.dash.dashboard.models.CPUUsage
+
+
+import com.dash.dashboard.models.CpuUsage
 import javafx.application.Platform
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
+import java.lang.reflect.Type
 import java.text.SimpleDateFormat
+import javax.swing.text.html.HTML.Tag.OL
 import kotlin.concurrent.thread
 
 
 class CPU {
+   public var prevTotalTime: Long = 0
+    public var prevIdleTime: Long = 0
     public fun testThread(){
         val t = Thread {
             while (true) {
@@ -30,8 +38,13 @@ class CPU {
         val cpuUsage = DoubleArray(1)
         thread(start = true) {
             while (true) {
-                val cpuFile = File("/proc/stat")
+              val cpuFile = File("/proc/stat")
                 val cpuStats = cpuFile.readLines()[0].split("\\s+".toRegex()).map { it.toLong() }
+
+                        // processa os valores da CPU
+                        // ...
+
+
 
                 val user = cpuStats[0]
                 val nice = cpuStats[1]
@@ -61,7 +74,20 @@ class CPU {
         }
     }
 
-    fun getCPUData(): String {
-    return ""
+    fun getCPUData(): CpuUsage {
+        val cpuFile = File("/proc/cpuinfo")
+        val cpuStats = cpuFile.readLines();
+        val model=cpuStats[4].split(":")[1]
+        val maxSpeed=(cpuStats[7].split(":")[1].toDouble()/1000)
+
+        val cpuInfo = File("/proc/stat").readLines()[0].split("\\s+".toRegex())
+        val totalTime = (cpuInfo[1].toLong() +cpuInfo[2].toLong()+cpuInfo[3].toLong()+cpuInfo[4].toLong()+cpuInfo[5].toLong()) - cpuInfo[3].toLong()
+        val idleTime = cpuInfo[3].toLong()
+        val deltaTime = totalTime - prevTotalTime
+        val deltaIdle = idleTime - prevIdleTime
+
+        val cpuUsage = 100.0 * (deltaTime - deltaIdle) / deltaTime
+        println("CPU usage: ${"%.2f".format(cpuUsage)}%")
+        return CpuUsage(modelname =  model, maxSpeed = maxSpeed, porcentUsage = cpuUsage);
     }
 }
