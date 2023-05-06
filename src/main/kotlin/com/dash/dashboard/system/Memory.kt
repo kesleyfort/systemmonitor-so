@@ -1,6 +1,5 @@
 package com.dash.dashboard.system
 
-import com.dash.dashboard.models.CPUUsage
 import com.dash.dashboard.models.MemUsage
 import javafx.application.Platform
 import java.io.File

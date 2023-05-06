@@ -1,3 +1,3 @@
 package com.dash.dashboard.models
 
-data class CPUUsage(val a: Int)
+data class CpuUsage(val modelname:String,val maxSpeed:Double ,val porcentUsage:Double)
