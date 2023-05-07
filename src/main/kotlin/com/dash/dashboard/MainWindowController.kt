@@ -2,11 +2,9 @@ package com.dash.dashboard
 
 import com.dash.dashboard.models.CpuUsage
 import com.dash.dashboard.models.MemUsage
-import com.dash.dashboard.models.StorageInfo
 import com.dash.dashboard.system.CPU
 import com.dash.dashboard.system.Memory
 import com.dash.dashboard.system.Storage
-import eu.hansolo.tilesfx.Tile
 import javafx.application.Platform
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
@@ -22,7 +20,7 @@ import java.text.DecimalFormat
 import java.util.*
 
 
-class MainWindowController: Initializable {
+class MainWindowController : Initializable {
 
     lateinit var porcentStorage: Label
     lateinit var storageBar: ProgressBar
@@ -31,35 +29,28 @@ class MainWindowController: Initializable {
     lateinit var cpuConsumptionChart: LineChart<String, Number>
     lateinit var cpuUsage: Label
     lateinit var cpuModel: Label
-    //fx:id="cpuModel"
-    @FXML
-    private lateinit var welcomeText: Label
+
     @FXML // fx:id="intervaloComboBox"
     private lateinit var intervaloComboBox: ChoiceBox<String>
-    @FXML // fx:id="memTile"
-    private lateinit var memTile: Tile
+
     @FXML // fx:id="freeMemLabel"
     private lateinit var freeMemLabel: Label
+
     @FXML // fx:id="usedMemLabel"
     private lateinit var usedMemLabel: Label
+
     @FXML // fx:id="totalMemLabel"
     private lateinit var totalMemLabel: Label
+
     @FXML // fx:id="memoryConsumptionChart"
     lateinit var memoryConsumptionChart: LineChart<String, Number>
 
     @FXML // fx:id="totalMemLabel"
-
     private lateinit var maxSpeed: Label
+    private var sleep = 5000L
+    private var chartCounter = 0
+    private var cpuChartCounter = 0
 
-    var sleep = 5000L
-    var chartCounter = 0
-
-    @FXML
-    private fun setSelectedInterval(){
-    }
-    @FXML
-    private fun setUpMemTile(){
-    }
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         intervaloComboBox.items.setAll("5 Segundos", "10 Segundos", "15 segundos")
@@ -68,36 +59,39 @@ class MainWindowController: Initializable {
         setUpStorageData()
 
     }
-private fun setUpStorageBar(
-        totalSpace:Double,freeSpace:Double){
 
-storageBar.progress=1-(freeSpace/totalSpace).toDouble()
-porcentStorage.text=(freeSpace/totalSpace *100).toInt().toString()+" %"
+    private fun setUpStorageBar(
+        totalSpace: Double, freeSpace: Double
+    ) {
 
-}
-    private fun setUpStorageData(){
-
-       var storageInfo =Storage().getDiskUsage()
-        totalStorage.text=storageInfo.totalSpace.toInt().toString()+ " Mb"
-        freeStorage.text=storageInfo.freeSpace.toInt().toString()+" Mb"
-        //configurar os text
-        setUpStorageBar(totalSpace = storageInfo.totalSpace,
-                freeSpace = storageInfo.freeSpace)
+        storageBar.progress = 1 - (freeSpace / totalSpace)
+        porcentStorage.text = (freeSpace / totalSpace * 100).toInt().toString() + " %"
 
     }
+
+    private fun setUpStorageData() {
+
+        val storageInfo = Storage().getDiskUsage()
+        totalStorage.text = storageInfo.totalSpace.toInt().toString() + " Mb"
+        freeStorage.text = storageInfo.freeSpace.toInt().toString() + " Mb"
+        setUpStorageBar(
+            totalSpace = storageInfo.totalSpace,
+            freeSpace = storageInfo.freeSpace
+        )
+
+    }
+
     private fun setUpCPUData() {
         val t = Thread {
             while (true) {
-               // var memData = Memory().getMemData()
-               // var cpuData =CPU().get
-                var data= CPU().getCPUData();
+                val data = CPU().getCPUData()
                 Platform.runLater {
-                    cpuModel.text = data.modelname
-                    val df =DecimalFormat("#.##")
-                     df.roundingMode=RoundingMode.DOWN
-                    maxSpeed.text=df.format( data.maxSpeed).toString() +"GHz"
-                    cpuUsage.text = String.format("%.2f", data.porcentUsage.toDouble())+ " %"
-                     setUpCPUChart(data)
+                    cpuModel.text = data.modelName
+                    val df = DecimalFormat("#.##")
+                    df.roundingMode = RoundingMode.DOWN
+                    maxSpeed.text = df.format(data.maxSpeed).toString() + "GHz"
+                    cpuUsage.text = String.format("%.2f", data.percentageUsage) + " %"
+                    setUpCPUChart(data)
                     sleep = intervaloComboBox.value.split(" ")[0].toLong() * 1000
                 }
                 try {
@@ -111,22 +105,23 @@ porcentStorage.text=(freeSpace/totalSpace *100).toInt().toString()+" %"
         t.isDaemon = true
         t.start()
     }
+
     private fun setUpCPUChart(cpuData: CpuUsage) {
         val series = Series<String, Number>()
-        series.data.add(XYChart.Data("$chartCounter segs", cpuData.porcentUsage))
+        series.data.add(XYChart.Data("$cpuChartCounter segs", cpuData.percentageUsage))
         cpuConsumptionChart.data.add(series)
-        chartCounter += (sleep / 1000).toInt()
+        cpuChartCounter += (sleep / 1000).toInt()
 
     }
 
     private fun setUpMemData() {
         val t = Thread {
             while (true) {
-                var memData = Memory().getMemData()
+                val memData = Memory().getMemData()
                 Platform.runLater {
                     usedMemLabel.text = (memData.usedMem).toString() + " Mb"
                     totalMemLabel.text = (memData.totalMem).toString() + " Mb"
-                    freeMemLabel.text = (memData.freeMem ).toString() + " Mb"
+                    freeMemLabel.text = (memData.freeMem).toString() + " Mb"
                     setUpMemChart(memData)
                     sleep = intervaloComboBox.value.split(" ")[0].toLong() * 1000
                 }
@@ -137,10 +132,11 @@ porcentStorage.text=(freeSpace/totalSpace *100).toInt().toString()+" %"
                 }
             }
         }
-        t.name = "cpu data updater"
+        t.name = "Mem Data & Chart"
         t.isDaemon = true
         t.start()
     }
+
     private fun setUpMemChart(memData: MemUsage) {
         val series = Series<String, Number>()
         series.data.add(XYChart.Data("$chartCounter segs", memData.usedMem))
@@ -148,8 +144,6 @@ porcentStorage.text=(freeSpace/totalSpace *100).toInt().toString()+" %"
         chartCounter += (sleep / 1000).toInt()
 
     }
-
-
 
 
 }

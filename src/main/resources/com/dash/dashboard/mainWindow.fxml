@@ -14,37 +14,35 @@
                 <Font size="22.0" />
             </font>
         </Label>
-        <Label layoutX="26.0" layoutY="526.0" prefHeight="47.0" prefWidth="150.0" text="Armazenamento">
+        <Label layoutX="26.0" layoutY="526.0" prefHeight="47.0" prefWidth="197.0" text="Armazenamento">
             <font>
-                <Font size="17.0" />
+                <Font size="22.0" />
             </font>
         </Label>
-      <Pane prefHeight="272.0" prefWidth="752.0">
-         <children>
-              <Separator layoutX="26.0" layoutY="249.0" prefHeight="18.0" prefWidth="700.0" />
-              <Label layoutX="14.0" layoutY="34.0" prefHeight="26.0" prefWidth="150.0" text="Memória">
-                  <font>
-                      <Font size="14.0" />
-                  </font>
-              </Label>
+        <Pane prefHeight="272.0" prefWidth="752.0">
+            <Separator layoutX="26.0" layoutY="249.0" prefHeight="18.0" prefWidth="700.0" />
+            <Label layoutX="14.0" layoutY="34.0" prefHeight="26.0" prefWidth="150.0" text="Memória">
+                <font>
+                    <Font size="22.0" />
+                </font>
+            </Label>
             <Label id="memoriaLivreLabel" layoutX="14.0" layoutY="118.0" text="Memoria Livre:" />
             <Label fx:id="freeMemLabel" layoutX="123.0" layoutY="118.0" text="x Mb" />
             <Label id="memoriaUsadaLabel" layoutX="14.0" layoutY="145.0" text="Memoria usada:" />
             <Label id="memoriaUsadaValue" fx:id="usedMemLabel" layoutX="123.0" layoutY="145.0" text="x Mb" />
-             <Label id="memoriaTotalLabel" layoutX="14.0" layoutY="173.0" text="Memoria total:" />
+            <Label id="memoriaTotalLabel" layoutX="14.0" layoutY="173.0" text="Memoria total:" />
             <Label id="memoriaTotalValue" fx:id="totalMemLabel" layoutX="123.0" layoutY="173.0" text="x Mb" />
-            <LineChart fx:id="memoryConsumptionChart" layoutX="185.0" layoutY="60.0" prefHeight="188.0" prefWidth="553.0">
-              <xAxis>
-                <CategoryAxis side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis side="LEFT" />
-              </yAxis>
+            <LineChart fx:id="memoryConsumptionChart" layoutX="209.0" layoutY="60.0" prefHeight="188.0" prefWidth="529.0">
+                <xAxis>
+                    <CategoryAxis side="BOTTOM" />
+                </xAxis>
+                <yAxis>
+                    <NumberAxis side="LEFT" />
+                </yAxis>
             </LineChart>
-         </children>
-      </Pane>
+        </Pane>
       <Label layoutX="89.0" layoutY="310.0" />
-      <Label layoutX="14.0" layoutY="326.0" prefHeight="26.0" prefWidth="132.0" text="Velecidade Máxima:" />
+      <Label layoutX="14.0" layoutY="326.0" prefHeight="26.0" prefWidth="132.0" text="Velocidade Máxima:" />
       <Label layoutX="14.0" layoutY="368.0" text="Utilização da CPU:" />
       <Label fx:id="maxSpeed" layoutX="155.0" layoutY="326.0" prefHeight="26.0" prefWidth="58.0" text="x GHz" />
         <Label fx:id="cpuModel" layoutX="319.0" layoutY="286.0" prefHeight="26.0" prefWidth="345.0" text="modelo" />
@@ -90,12 +88,11 @@
     </ButtonBar>
     <TableView layoutX="753.0" layoutY="65.0" prefHeight="674.0" prefWidth="513.0">
       <columns>
-          <TableColumn prefWidth="181.0" text="Processo" />
           <TableColumn minWidth="1.0" prefWidth="51.0" text="ID" />
+          <TableColumn prefWidth="181.0" text="Processo" />
           <TableColumn prefWidth="73.0" text="Memoria" />
           <TableColumn prefWidth="64.0" text="Threads" />
-          <TableColumn prefWidth="69.0" text="Usuario" />
-          <TableColumn prefWidth="74.0" text="Prioridade" />
+          <TableColumn prefWidth="69.0" text="Usuário" />
       </columns>
     </TableView>
 </AnchorPane>
