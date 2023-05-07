@@ -9,7 +9,6 @@ class Memory {
     fun getMemData(): MemUsage {
         val memFile = File("/proc/meminfo")
         val memInfo = memFile.readLines()
-
         val totalMem = memInfo[0].split(":")[1].trim().split(" ")[0].toLong()
         val freeMem = memInfo[1].split(":")[1].trim().split(" ")[0].toLong() + memInfo[4].split(":")[1].trim()
             .split(" ")[0].toLong()
