@@ -15,7 +15,7 @@ import kotlin.concurrent.thread
 
 class CPU {
    public var prevTotalTime: Long = 0
-    public var prevIdleTime: Long = 0
+    public var prevIdleTime: Long= 0
     public fun testThread(){
         val t = Thread {
             while (true) {
@@ -73,21 +73,35 @@ class CPU {
             }
         }
     }
-
+/**
+O código lê a primeira linha do arquivo "/proc/stat" e descarta a primeira palavra dessa linha,
+que é sempre "cpu". Em seguida, ele soma todos os valores de tempo encontrados nessa primeira linha
+para obter o tempo total. Ele divide a quarta coluna "idle" pelo tempo total para obter a fração de tempo gasta ociosa.
+Em seguida, subtrai essa fração anterior da fração atual de 1.0 para obter o tempo gasto não ocioso.
+Multiplica-se por 100 para obter uma porcentagem.
+ * */
     fun getCPUData(): CpuUsage {
+
         val cpuFile = File("/proc/cpuinfo")
         val cpuStats = cpuFile.readLines();
         val model=cpuStats[4].split(":")[1]
         val maxSpeed=(cpuStats[7].split(":")[1].toDouble()/1000)
 
-        val cpuInfo = File("/proc/stat").readLines()[0].split("\\s+".toRegex())
-        val totalTime = (cpuInfo[1].toLong() +cpuInfo[2].toLong()+cpuInfo[3].toLong()+cpuInfo[4].toLong()+cpuInfo[5].toLong()) - cpuInfo[3].toLong()
-        val idleTime = cpuInfo[3].toLong()
-        val deltaTime = totalTime - prevTotalTime
-        val deltaIdle = idleTime - prevIdleTime
+        val statsFile = File("/proc/stat")
+        val firstLine = statsFile.readLines()[0].drop(5)
 
-        val cpuUsage = 100.0 * (deltaTime - deltaIdle) / deltaTime
-        println("CPU usage: ${"%.2f".format(cpuUsage)}%")
+        val split = firstLine.split(' ')
+        val idleTime = split[3].toLong()
+        val totalTime = split.map { it.toLong() }.sum()
+
+            val deltaIdleTime  = idleTime  - prevIdleTime
+            val deltaTotalTime = totalTime - prevTotalTime
+            val cpuUsage = (1.0 - deltaIdleTime.toDouble() / deltaTotalTime) * 100.0
+            println(" ${"%6.3f".format(cpuUsage)}")
+
+        prevIdleTime  = idleTime
+        prevTotalTime = totalTime
         return CpuUsage(modelname =  model, maxSpeed = maxSpeed, porcentUsage = cpuUsage);
+            }
+
     }
-}

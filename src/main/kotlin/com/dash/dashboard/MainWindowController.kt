@@ -2,8 +2,10 @@ package com.dash.dashboard
 
 import com.dash.dashboard.models.CpuUsage
 import com.dash.dashboard.models.MemUsage
+import com.dash.dashboard.models.StorageInfo
 import com.dash.dashboard.system.CPU
 import com.dash.dashboard.system.Memory
+import com.dash.dashboard.system.Storage
 import eu.hansolo.tilesfx.Tile
 import javafx.application.Platform
 import javafx.fxml.FXML
@@ -13,6 +15,7 @@ import javafx.scene.chart.XYChart
 import javafx.scene.chart.XYChart.Series
 import javafx.scene.control.ChoiceBox
 import javafx.scene.control.Label
+import javafx.scene.control.ProgressBar
 import java.math.RoundingMode
 import java.net.URL
 import java.text.DecimalFormat
@@ -21,6 +24,10 @@ import java.util.*
 
 class MainWindowController: Initializable {
 
+    lateinit var porcentStorage: Label
+    lateinit var storageBar: ProgressBar
+    lateinit var totalStorage: Label
+    lateinit var freeStorage: Label
     lateinit var cpuConsumptionChart: LineChart<String, Number>
     lateinit var cpuUsage: Label
     lateinit var cpuModel: Label
@@ -58,9 +65,26 @@ class MainWindowController: Initializable {
         intervaloComboBox.items.setAll("5 Segundos", "10 Segundos", "15 segundos")
         setUpMemData()
         setUpCPUData()
+        setUpStorageData()
 
     }
+private fun setUpStorageBar(
+        totalSpace:Double,freeSpace:Double){
 
+storageBar.progress=1-(freeSpace/totalSpace).toDouble()
+porcentStorage.text=(freeSpace/totalSpace *100).toInt().toString()+" %"
+
+}
+    private fun setUpStorageData(){
+
+       var storageInfo =Storage().getDiskUsage()
+        totalStorage.text=storageInfo.totalSpace.toInt().toString()+ " Mb"
+        freeStorage.text=storageInfo.freeSpace.toInt().toString()+" Mb"
+        //configurar os text
+        setUpStorageBar(totalSpace = storageInfo.totalSpace,
+                freeSpace = storageInfo.freeSpace)
+
+    }
     private fun setUpCPUData() {
         val t = Thread {
             while (true) {
