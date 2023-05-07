@@ -14,9 +14,9 @@
                 <Font size="22.0" />
             </font>
         </Label>
-        <Label layoutX="26.0" layoutY="526.0" prefHeight="47.0" prefWidth="150.0" text="Rede">
+        <Label layoutX="26.0" layoutY="526.0" prefHeight="47.0" prefWidth="150.0" text="Armazenamento">
             <font>
-                <Font size="14.0" />
+                <Font size="17.0" />
             </font>
         </Label>
       <Pane prefHeight="272.0" prefWidth="752.0">
@@ -57,6 +57,26 @@
                 <NumberAxis side="LEFT" />
             </yAxis>
         </LineChart>
+      <ProgressBar fx:id="storageBar" layoutX="352.0" layoutY="566.0" prefHeight="68.0" prefWidth="345.0" progress="0.0" />
+      <Label fx:id="totalStorage" layoutX="64.0" layoutY="625.0" text="x Mb">
+         <font>
+            <Font size="14.0" />
+         </font></Label>
+        <Label fx:id="freeStorage" layoutX="194.0" layoutY="626.0" text="x Mb" />
+        <Label fx:id="porcentStorage" layoutX="470.0" layoutY="583.0" prefHeight="34.0" prefWidth="132.0" text="freeStorage">
+         <font>
+            <Font size="22.0" />
+         </font></Label>
+      <Label layoutX="62.0" layoutY="592.0" text="Total">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </Label>
+      <Label layoutX="184.0" layoutY="591.0" text="Disponível">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </Label>
     </Pane>
     <ButtonBar layoutX="948.0" layoutY="14.0" prefHeight="40.0" prefWidth="318.0">
       <buttons>
