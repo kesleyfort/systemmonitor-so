@@ -6,6 +6,12 @@ import java.io.File
 import java.io.InputStreamReader
 
 class Process {
+    /**
+     * A função procura por diretórios que tenham nome número no /proc (pois são os referentes a processos), depois itera por esses diretórios acessando
+     * o arquivo status, onde verifica se o uuid corresponde com o do usuário logado (função getCurrentUserUUID() para pegar o uuid do usuário logado)
+     * Se sim, ele lê o arquivo e adiciona os dados numa collection de um POJO. Após iterar por todos os diretórios a collection é retornada.
+     *
+     */
     fun getProcessData(): MutableList<ProcessUsage> {
         val user = getCurrentUserUUID()
         val processMutableList: MutableList<ProcessUsage> = mutableListOf()
@@ -33,7 +39,10 @@ class Process {
         return processMutableList
     }
 
-    fun getCurrentUserUUID(): Pair<Int?, String> {
+    /**
+     * Função usa dois comandos do sistema para conseguir o uid e nome de usuário logado, depois retorna um Pair com estes dados.
+     */
+    private fun getCurrentUserUUID(): Pair<Int?, String> {
         val process = Runtime.getRuntime().exec("id -u --user")
         val reader = BufferedReader(InputStreamReader(process.inputStream))
         val uid = reader.readLine().toIntOrNull()

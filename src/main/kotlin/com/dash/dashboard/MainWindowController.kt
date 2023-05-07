@@ -101,7 +101,7 @@ class MainWindowController : Initializable {
                 }
             }
         }
-        t.name = "Mem Data & Chart"
+        t.name = "Process Table"
         t.isDaemon = true
         t.start()
     }
@@ -116,13 +116,26 @@ class MainWindowController : Initializable {
     }
 
     private fun setUpStorageData() {
-
-        val storageInfo = Storage().getDiskUsage()
-        totalStorage.text = storageInfo.totalSpace.toInt().toString() + " Mb"
-        freeStorage.text = storageInfo.freeSpace.toInt().toString() + " Mb"
-        setUpStorageBar(
-            totalSpace = storageInfo.totalSpace, freeSpace = storageInfo.freeSpace
-        )
+        val t = Thread {
+            while (true) {
+                val storageInfo = Storage().getDiskUsage()
+                Platform.runLater {
+                    totalStorage.text = storageInfo.totalSpace.toInt().toString() + " Mb"
+                    freeStorage.text = storageInfo.freeSpace.toInt().toString() + " Mb"
+                    setUpStorageBar(
+                        totalSpace = storageInfo.totalSpace, freeSpace = storageInfo.freeSpace
+                    )
+                }
+                try {
+                    Thread.sleep(sleep)
+                } catch (ex: InterruptedException) {
+                    break
+                }
+            }
+        }
+        t.name = "Storage Data & Chart"
+        t.isDaemon = true
+        t.start()
 
     }
 
@@ -146,7 +159,7 @@ class MainWindowController : Initializable {
                 }
             }
         }
-        t.name = "CPU INFO"
+        t.name = "CPU Data & Chart"
         t.isDaemon = true
         t.start()
     }
