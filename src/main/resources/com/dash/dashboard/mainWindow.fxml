@@ -86,13 +86,13 @@
           </ChoiceBox>
       </buttons>
     </ButtonBar>
-    <TableView layoutX="753.0" layoutY="65.0" prefHeight="674.0" prefWidth="513.0">
+    <TableView fx:id="processTable" layoutX="753.0" layoutY="65.0" prefHeight="674.0" prefWidth="513.0">
       <columns>
-          <TableColumn minWidth="1.0" prefWidth="51.0" text="ID" />
-          <TableColumn prefWidth="181.0" text="Processo" />
-          <TableColumn prefWidth="73.0" text="Memoria" />
-          <TableColumn prefWidth="64.0" text="Threads" />
-          <TableColumn prefWidth="69.0" text="Usuário" />
+          <TableColumn fx:id="idCol" minWidth="1.0" prefWidth="62.0" text="ID" />
+          <TableColumn fx:id="processCol" prefWidth="236.0" text="Processo" />
+          <TableColumn fx:id="memCol" prefWidth="83.0" text="Memoria" />
+          <TableColumn fx:id="threadsCol" prefWidth="57.0" text="Threads" />
+          <TableColumn fx:id="userCol" prefWidth="74.0" text="Usuário" />
       </columns>
     </TableView>
 </AnchorPane>

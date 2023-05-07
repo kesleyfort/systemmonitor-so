@@ -10,5 +10,6 @@ module com.dash.dashboard {
     requires eu.hansolo.tilesfx;
 
     opens com.dash.dashboard to javafx.fxml;
+    opens com.dash.dashboard.models to javafx.base;
     exports com.dash.dashboard;
 }
