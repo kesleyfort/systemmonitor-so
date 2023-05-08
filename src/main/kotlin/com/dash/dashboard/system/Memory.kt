@@ -5,7 +5,11 @@ import java.io.File
 
 
 class Memory {
-
+    /**
+     * Função criada para pegar os dados do consumo de memória dentro da partição proc, no arquivo meminfo.
+     * Após abrir o arquivo, analisamos as linhas que mostram o valor de memória total, memória livre, fazemos o cálculo da memória usada e depois calculamos o percentual de memória usada.
+     * Depois é retornado um POJO contendo os dados.
+     */
     fun getMemData(): MemUsage {
         val memFile = File("/proc/meminfo")
         val memInfo = memFile.readLines()
