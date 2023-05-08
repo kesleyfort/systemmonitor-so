@@ -81,6 +81,11 @@ class MainWindowController : Initializable {
 
     }
 
+    /**
+     * Função define as propriedades do POJO relacionadas a cada coluna da tabela, depois cria uma thread para executar a atualização da porção da tela dedicada a tabela de processos.
+     * Como não existe a possibilidade de uma thread externa alterar elementos da tela, é usado o comando Platform.runLater para atualizar elementos da tela por uma thread externa a do javaFX.
+     * Sleep do gráfico é atualizado dependendo do valor selecionado no comboBox de intervalo.
+     */
     private fun setUpProcessTable() {
         idCol.cellValueFactory = PropertyValueFactory("id")
         processCol.cellValueFactory = PropertyValueFactory("processName")
@@ -105,7 +110,9 @@ class MainWindowController : Initializable {
         t.isDaemon = true
         t.start()
     }
-
+    /**
+    * Função atualiza a barra de progresso da seção storage
+    **/
     private fun setUpStorageBar(
         totalSpace: Double, freeSpace: Double
     ) {
@@ -114,7 +121,10 @@ class MainWindowController : Initializable {
         porcentStorage.text = (freeSpace / totalSpace * 100).toInt().toString() + " %"
 
     }
-
+    /**
+    Função cria uma thread para executar a atualização da tela dedicada a armazenamento.
+    * Como não existe a possibilidade de uma thread externa alterar elementos da tela, é usado o comando Platform.runLater para atualizar elementos da tela por uma thread externa a do javaFX.
+    */
     private fun setUpStorageData() {
         val t = Thread {
             while (true) {
@@ -138,7 +148,11 @@ class MainWindowController : Initializable {
         t.start()
 
     }
-
+    /**
+    Função cria uma thread para executar a atualização da porção da tela dedicada a CPU.
+     * Como não existe a possibilidade de uma thread externa alterar elementos da tela, é usado o comando Platform.runLater para atualizar elementos da tela por uma thread externa a do javaFX.
+     * Sleep do gráfico é atualizado dependendo do valor selecionado no comboBox de intervalo.
+     */
     private fun setUpCPUData() {
         val t = Thread {
             while (true) {
@@ -171,7 +185,11 @@ class MainWindowController : Initializable {
         cpuChartCounter += (sleep / 1000).toInt()
 
     }
-
+    /**
+    Função cria uma thread para executar a atualização da tela dedicada a memória.
+     * Como não existe a possibilidade de uma thread externa alterar elementos da tela, é usado o comando Platform.runLater para atualizar elementos da tela por uma thread externa a do javaFX.
+     * Sleep do gráfico é atualizado dependendo do valor selecionado no comboBox de intervalo.
+     */
     private fun setUpMemData() {
         val t = Thread {
             while (true) {
