@@ -14,12 +14,16 @@ import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
 import javafx.scene.Parent
+import javafx.geometry.Insets
+import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.chart.LineChart
 import javafx.scene.chart.XYChart
 import javafx.scene.chart.XYChart.Series
 import javafx.scene.control.*
 import javafx.scene.control.cell.PropertyValueFactory
+import javafx.scene.control.cell.TreeItemPropertyValueFactory
+import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import java.math.RoundingMode
 import java.net.URL
@@ -53,26 +57,30 @@ class MainWindowController : Initializable {
     lateinit var memoryConsumptionChart: LineChart<String, Number>
 
     @FXML // fx:id="processTable"
-    lateinit var processTable: TableView<ProcessUsage>
+    lateinit var processTable: TreeTableView<ProcessUsage>
 
     @FXML // fx:id="idCol"
-    lateinit var idCol: TableColumn<ProcessUsage, Number>
+    lateinit var idCol: TreeTableColumn<ProcessUsage, Number>
 
     @FXML // fx:id="processCol"
-    lateinit var processCol: TableColumn<String, String>
+    lateinit var processCol: TreeTableColumn<String, String>
 
     @FXML // fx:id="memCol"
-    lateinit var memCol: TableColumn<String, String>
+    lateinit var memCol: TreeTableColumn<String, String>
 
     @FXML // fx:id="threadsCol"
-    lateinit var threadsCol: TableColumn<String, String>
+    lateinit var threadsCol: TreeTableColumn<String, String>
 
     @FXML // fx:id="userCol"
-    lateinit var userCol: TableColumn<String, String>
+    lateinit var userCol: TreeTableColumn<String, String>
 
     @FXML // fx:id="totalMemLabel"
     private lateinit var maxSpeed: Label
     public var sleep = 5000L
+
+    @FXML // fx:id="checkboxProcessos"
+    private lateinit var checkboxProcessos: CheckBox
+
     private var chartCounter = 0
     private var cpuChartCounter = 0
 
@@ -106,16 +114,34 @@ class MainWindowController : Initializable {
      * Sleep do gráfico é atualizado dependendo do valor selecionado no comboBox de intervalo.
      */
     private fun setUpProcessTable() {
-        idCol.cellValueFactory = PropertyValueFactory("id")
-        processCol.cellValueFactory = PropertyValueFactory("processName")
-        memCol.cellValueFactory = PropertyValueFactory("memUsed")
-        threadsCol.cellValueFactory = PropertyValueFactory("threads")
-        userCol.cellValueFactory = PropertyValueFactory("user")
+        processTable.setOnMouseClicked {
+            if (it.clickCount == 2) {
+                val process: TreeItem<ProcessUsage> = processTable.selectionModel.selectedItem
+                createProcessDetailsWindow(process)
+            }
+        }
         val t = Thread {
             while (true) {
-                val processData = Process().getProcessData()
+                val allUsers = checkboxProcessos.isSelected
+                val processData = Process().getChildrenProcesses(allUsers)
+                val root: TreeItem<ProcessUsage> = TreeItem<ProcessUsage>(
+                   processData[0]
+                )
+                root.isExpanded = true
+                for(process in processData[0].children!!) {
+                    root.children.add(TreeItem(process))
+                    if(process.children!!.size > 0){
+                        for(child in process.children)
+                        root.children.find { it.value.id == process.id}!!.children.add(TreeItem(child))
+                    }
+                }
                 Platform.runLater {
-                    processTable.items = FXCollections.observableArrayList(processData)
+                    idCol.cellValueFactory = TreeItemPropertyValueFactory("id")
+                    processCol.cellValueFactory = TreeItemPropertyValueFactory("processName")
+                    memCol.cellValueFactory = TreeItemPropertyValueFactory("memUsed")
+                    threadsCol.cellValueFactory = TreeItemPropertyValueFactory("threads")
+                    userCol.cellValueFactory = TreeItemPropertyValueFactory("user")
+                    processTable.root = root
                     sleep = intervaloComboBox.value.split(" ")[0].toLong() * 1000
                 }
                 try {
@@ -129,6 +155,61 @@ class MainWindowController : Initializable {
         t.isDaemon = true
         t.start()
     }
+
+    private fun createProcessDetailsWindow(item: TreeItem<ProcessUsage>) {
+        val crudeProcessData = Process().getDataForSpecificProcess(item.value.id.toString())
+        val newWindow = Stage()
+        var container: VBox
+        newWindow.let {
+            it.title = "Detalhes do processo ${item.value.processName} "
+            it.height = 500.0
+            it.width = 450.0
+        }
+        if(!item.value.children.isNullOrEmpty()){
+            val tableView: TableView<ProcessUsage> = TableView()
+            val pidCol: TableColumn<ProcessUsage, String> = TableColumn("Pid")
+            val nomeCol: TableColumn<ProcessUsage, String> = TableColumn("Processo")
+            val usuarioCol: TableColumn<ProcessUsage, Int> = TableColumn("Usuário")
+            val threadsCol: TableColumn<ProcessUsage, Double> = TableColumn("Threads")
+            val memoriaCol: TableColumn<ProcessUsage, Double> = TableColumn("Memória")
+            pidCol.cellValueFactory = PropertyValueFactory("id")
+            nomeCol.cellValueFactory = PropertyValueFactory("processName")
+            memoriaCol.cellValueFactory = PropertyValueFactory("memUsed")
+            threadsCol.cellValueFactory = PropertyValueFactory("threads")
+            usuarioCol.cellValueFactory = PropertyValueFactory("user")
+            tableView.columns.addAll(pidCol, nomeCol, memoriaCol, threadsCol,usuarioCol)
+            tableView.items = FXCollections.observableArrayList(item.value.children)
+            container = VBox(
+                Label("Nome: " + item.value.processName),
+                Label("Memória usada: " + item.value.memUsed),
+                Label("Threads: " + item.value.threads),
+                Label("Dono do processo: " + item.value.user),
+                Label("Pid pai: " + crudeProcessData.first),
+                Label("Estado do processo: " + crudeProcessData.second),
+                Label("Uso de CPU: ${crudeProcessData.third}%"),
+                Label("Filhos:"),
+                tableView
+            )
+        }
+        else{
+            container = VBox(
+                Label("Nome: " + item.value.processName),
+                Label("Memória usada: " + item.value.memUsed),
+                Label("Threads: " + item.value.threads),
+                Label("Dono do processo: " + item.value.user),
+                Label("Pid Pai: " + crudeProcessData.first),
+                Label("Estado do processo: " + crudeProcessData.second),
+                Label("Uso de CPU: " + crudeProcessData.third),
+            )
+        }
+
+        container.spacing = 15.0
+        container.padding = Insets(25.0)
+        container.alignment = Pos.TOP_LEFT
+        newWindow.scene = Scene(container)
+        newWindow.show()
+    }
+
     /**
     * Função atualiza a barra de progresso da seção storage
     **/
