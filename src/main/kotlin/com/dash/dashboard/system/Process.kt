@@ -34,6 +34,12 @@ class Process {
         return Pair(uid, user)
     }
 
+    /**
+     * Retorna uma lista de processos filhos do usuário atual ou de todos os usuários.
+     *
+     * @param allUsers Se verdadeiro, retorna processos filhos de todos os usuários. Caso contrário, retorna apenas processos filhos do usuário atual.
+     * @return Uma lista de objetos [ProcessUsage] representando os processos filhos.
+     */
     fun getChildrenProcesses(allUsers: Boolean): MutableList<ProcessUsage> {
         val user = getCurrentUserUUID()
         val childProcessList: MutableList<String> = mutableListOf()
@@ -46,6 +52,12 @@ class Process {
         return processArray
     }
 
+    /**
+     * Preenche as listas com informações sobre os processos filhos de todos os usuários.
+     *
+     * @param childProcessList Lista mutável para armazenar os IDs dos processos filhos.
+     * @param processArray Lista mutável para armazenar objetos [ProcessUsage] representando os processos filhos.
+     */
     private fun getProcessesForAllUsers(
         childProcessList: MutableList<String>, processArray: MutableList<ProcessUsage>
     ) {
@@ -99,10 +111,11 @@ class Process {
     }
 
     /**
-     * Função criada para pegar os processos do usuário logado. Para o usuário logado, o systemd é pai de todos os processos da sessão, então começamos
-     * pegando o pid deste processo e, a partir daí, seguimos adicionando seus filhos e filhos de seus filhos.
-     * A função recebe uma lista com todos os processos filhos do systemd, um pair com id e nome do usuário logado e um array para que sejam adicionados os
-     * dados dos processos.
+     * Preenche as listas com informações sobre os processos filhos do usuário atual.
+     *
+     * @param childProcessList Lista mutável para armazenar os IDs dos processos filhos.
+     * @param user Par contendo o ID e o nome do usuário atual.
+     * @param processArray Lista mutável para armazenar objetos [ProcessUsage] representando os processos filhos.
      */
     private fun getProcessesForCurrentUser(
         childProcessList: MutableList<String>, user: Pair<Int?, String>, processArray: MutableList<ProcessUsage>
@@ -161,6 +174,17 @@ class Process {
         }
     }
 
+    /**
+     * Adiciona informações sobre um processo filho à lista de processos.
+     *
+     * @param processArray Lista mutável de objetos [ProcessUsage] representando os processos filhos.
+     * @param pPid ID do processo pai.
+     * @param pid ID do processo filho.
+     * @param name Nome do processo filho.
+     * @param memUsed Memória usada pelo processo filho.
+     * @param threads Número de threads do processo filho.
+     * @param uid ID do usuário que possui o processo filho.
+     */
     private fun createProcessTree(
         processArray: MutableList<ProcessUsage>,
         pPid: String,
