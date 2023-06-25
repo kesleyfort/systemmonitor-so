@@ -9,7 +9,6 @@ import com.dash.dashboard.system.Process
 import com.dash.dashboard.system.Storage
 import javafx.application.Platform
 import javafx.collections.FXCollections
-import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
@@ -76,7 +75,7 @@ class MainWindowController : Initializable {
 
     @FXML // fx:id="totalMemLabel"
     private lateinit var maxSpeed: Label
-    public var sleep = 5000L
+    var sleep = 5000L
 
     @FXML // fx:id="checkboxProcessos"
     private lateinit var checkboxProcessos: CheckBox
@@ -85,7 +84,7 @@ class MainWindowController : Initializable {
     private var cpuChartCounter = 0
 
     @FXML
-    protected fun goToFilesInfo(e: ActionEvent){
+    fun goToFilesInfo() {
         val stage = Stage()
         val loader = FXMLLoader(javaClass.getResource("filesScreen.fxml"))
         val root: Parent = loader.load()
@@ -94,7 +93,7 @@ class MainWindowController : Initializable {
         val controller = loader.getController<FilesController>()
         controller.setTelaPrincipalStage(stage)
 
-        stage.title = "Tela Secundária"
+        stage.title = "Arquivos"
         stage.scene = scene
         stage.show()
 
@@ -159,7 +158,7 @@ class MainWindowController : Initializable {
     private fun createProcessDetailsWindow(item: TreeItem<ProcessUsage>) {
         val crudeProcessData = Process().getDataForSpecificProcess(item.value.id.toString())
         val newWindow = Stage()
-        var container: VBox
+        val container: VBox
         newWindow.let {
             it.title = "Detalhes do processo ${item.value.processName} "
             it.height = 500.0

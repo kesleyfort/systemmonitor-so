@@ -231,7 +231,14 @@ class Process {
             val state = stateLine?.substringAfter("State:")?.trim()!!.split("\t")[0]
             val process = Runtime.getRuntime().exec("ps -p $id -o %cpu")
             val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val cpuUsage = reader.readLines()[1].trim()
+            val lines = reader.readLines()
+            var cpuUsage = ""
+            cpuUsage = if(lines.size > 1) {
+               lines[1].trim()
+            } else {
+                "0.0"
+            }
+
             return Triple(pPid, state, cpuUsage)
         }
         return Triple("", "", "")
