@@ -9,13 +9,18 @@ import com.dash.dashboard.system.Process
 import com.dash.dashboard.system.Storage
 import javafx.application.Platform
 import javafx.collections.FXCollections
+import javafx.event.ActionEvent
 import javafx.fxml.FXML
+import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
+import javafx.scene.Parent
+import javafx.scene.Scene
 import javafx.scene.chart.LineChart
 import javafx.scene.chart.XYChart
 import javafx.scene.chart.XYChart.Series
 import javafx.scene.control.*
 import javafx.scene.control.cell.PropertyValueFactory
+import javafx.stage.Stage
 import java.math.RoundingMode
 import java.net.URL
 import java.text.DecimalFormat
@@ -71,7 +76,21 @@ class MainWindowController : Initializable {
     private var chartCounter = 0
     private var cpuChartCounter = 0
 
+    @FXML
+    protected fun goToFilesInfo(e: ActionEvent){
+        val stage = Stage()
+        val loader = FXMLLoader(javaClass.getResource("filesScreen.fxml"))
+        val root: Parent = loader.load()
+        val scene = Scene(root)
 
+        val controller = loader.getController<FilesController>()
+        controller.setTelaPrincipalStage(stage)
+
+        stage.title = "Tela Secundária"
+        stage.scene = scene
+        stage.show()
+
+    }
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         intervaloComboBox.items.setAll("5 Segundos", "10 Segundos", "15 segundos")
         setUpMemData()
