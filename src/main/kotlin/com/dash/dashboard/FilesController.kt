@@ -2,6 +2,8 @@ package com.dash.dashboard
 
 import com.dash.dashboard.models.FileData
 import com.dash.dashboard.system.FilesInfo
+import com.dash.dashboard.system.Memory
+import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.fxml.Initializable
 import javafx.scene.control.*
@@ -46,30 +48,48 @@ class FilesController : Initializable {
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         setUpFilesTable()
-        val rootDirectory = File("/home/lucao/IdeaProjects/") //trocar pelo seu diretorio
+        createFileTreeTable()
+    }
 
-//Adiciona na raiz da treeTableView o nó criado apartir da função  createDirectoryNode
-        val rootNode = FilesInfo().createDirectoryNode(rootDirectory)
+    private fun createFileTreeTable() {
+        val rootDirectory = File("/home/${System.getenv("USER")}/Pictures")
+        val t = Thread {
+            val rootNode = FilesInfo().createDirectoryNode(rootDirectory)
+            while (true) {
+                Platform.runLater {
+                    treeName = TreeTableColumn<FileAttributes, String>("NOME")
+                    treeName.cellValueFactory = TreeItemPropertyValueFactory("treeName")
+                    treeName.prefWidth = 200.0
 
-        treeName = TreeTableColumn<FileAttributes, String>("NOME")
-        treeName.cellValueFactory = TreeItemPropertyValueFactory("treeName")
-        treeName.prefWidth=200.0
+                    treeTotalSpace = TreeTableColumn("TAMANHO")
+                    treeTotalSpace.cellValueFactory = TreeItemPropertyValueFactory("treeTotalSpace")
 
-        treeTotalSpace = TreeTableColumn("TAMANHO")
-        treeTotalSpace.cellValueFactory = TreeItemPropertyValueFactory("treeTotalSpace")
+                    treePermissions = TreeTableColumn("PERMISSÕES")
+                    treePermissions.cellValueFactory = TreeItemPropertyValueFactory("permissions")
 
-        treePermissions = TreeTableColumn("PERMISSÕES")
-        treePermissions.cellValueFactory = TreeItemPropertyValueFactory("permissions")
-
-        lastModified = TreeTableColumn("ÚLTIMO ACESSO")
-        lastModified.cellValueFactory = TreeItemPropertyValueFactory("lastModified")
-
-
-        tree.columns.addAll(treeName,treeTotalSpace,lastModified,treePermissions/*treePermissions treeSize, treeIsDirectory, treeLastModified*/)
-        tree.isShowRoot = true
-        tree.root=rootNode
+                    lastModified = TreeTableColumn("ÚLTIMO ACESSO")
+                    lastModified.cellValueFactory = TreeItemPropertyValueFactory("lastModified")
 
 
+                    tree.columns.addAll(
+                        treeName,
+                        treeTotalSpace,
+                        lastModified,
+                        treePermissions/*treePermissions treeSize, treeIsDirectory, treeLastModified*/
+                    )
+                    tree.isShowRoot = true
+                    tree.root = rootNode
+                }
+                try {
+                    Thread.sleep(MainWindowController().sleep)
+                } catch (ex: InterruptedException) {
+                    break
+                }
+            }
+        }
+        t.name = "Mem Data & Chart"
+        t.isDaemon = true
+        t.start()
     }
 
     fun setTelaPrincipalStage(stage: Stage) {
@@ -77,7 +97,7 @@ class FilesController : Initializable {
     }
 
     fun setUpFilesTable() {
-     //Inicializa as colunas da tabela
+        //Inicializa as colunas da tabela
         nameFile.cellValueFactory = PropertyValueFactory("name")
         totalSizeFile.cellValueFactory = PropertyValueFactory("TotalSpace")
         usedSizeFile.cellValueFactory = PropertyValueFactory("usedSpace")
@@ -96,15 +116,15 @@ class FilesController : Initializable {
         val stage = telaPrincipalStage.scene.window as Stage
         stage.close()
     }
+
     data class FileAttributes(
-            val treeName: String,
-            val isDirectory: Boolean,
-            val permissions:String,
-            val  lastModified:String,
-            val treeTotalSpace:String,
+        val treeName: String,
+        val isDirectory: Boolean,
+        val permissions: String,
+        val lastModified: String,
+        val treeTotalSpace: String,
 
-    )
-
+        )
 
 
 }

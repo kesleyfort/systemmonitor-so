@@ -72,7 +72,7 @@ class MainWindowController : Initializable {
 
     @FXML // fx:id="totalMemLabel"
     private lateinit var maxSpeed: Label
-    private var sleep = 5000L
+    public var sleep = 5000L
     private var chartCounter = 0
     private var cpuChartCounter = 0
 
