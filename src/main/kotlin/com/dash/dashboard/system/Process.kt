@@ -6,37 +6,14 @@ import java.io.File
 import java.io.InputStreamReader
 
 class Process {
-    /**
-     * A função procura por diretórios que tenham nome número no /proc (pois são os referentes a processos), depois itera por esses diretórios acessando
-     * o arquivo status, onde verifica se o uuid corresponde com o do usuário logado (função getCurrentUserUUID() para pegar o uuid do usuário logado)
-     * Se sim, ele lê o arquivo e adiciona os dados numa collection de um POJO. Após iterar por todos os diretórios a collection é retornada.
-     *
-     */
-    fun getProcessData(): MutableList<ProcessUsage> {
-        val user = getCurrentUserUUID()
-        val processMutableList: MutableList<ProcessUsage> = mutableListOf()
-        val procDir = File("/proc")
-        val processes = procDir.list { _, name -> name.matches(Regex("\\d+")) } ?: emptyArray()
-        for (process in processes) {
-            val procFile = File(procDir, process)
-            val statusFile = File(procFile, "status")
-            val pid = process.toIntOrNull()
-            if (pid != null && statusFile.exists()) {
-                val statusLines = statusFile.readLines()
-                val nameLine = statusLines.firstOrNull { it.startsWith("Name:") }
-                val uidLine = statusLines.firstOrNull { it.startsWith("Uid:") }
-                val threadsLine = statusLines.firstOrNull { it.startsWith("Threads:") }
-                val memUsedLIne = statusLines.firstOrNull { it.startsWith("RssAnon:") }
-                val uid = uidLine?.substringAfter("Uid:")?.trim()!!.split("\t")[0]
-                if (user.first.toString() == uid) {
-                    val name = nameLine?.substringAfter("Name:")?.trim()
-                    val threads = threadsLine?.substringAfter("Threads:")?.trim()!!.split("\t")[0]
-                    val memUsed = memUsedLIne?.substringAfter("RssAnon:")?.trim()!!.split(" ")[0].toDouble()
-                    processMutableList.add(ProcessUsage(pid, name, "${(memUsed / 1000)} Mb".replace(".", ","), threads, user.second))
-                }
-            }
-        }
-        return processMutableList
+
+    private fun getUserByUid(uid: Int): Pair<Int, String> {
+        val userProcess = Runtime.getRuntime().exec("getent passwd $uid")
+        val userReader = BufferedReader(InputStreamReader(userProcess.inputStream))
+        val userLine = userReader.readLine().trim()
+        userProcess.waitFor()
+        val user = userLine.split(":")[0]
+        return Pair(uid, user)
     }
 
     /**
@@ -55,5 +32,173 @@ class Process {
             user = userLine.split(":")[0]
         }
         return Pair(uid, user)
+    }
+
+    fun getChildrenProcesses(allUsers: Boolean): MutableList<ProcessUsage> {
+        val user = getCurrentUserUUID()
+        val childProcessList: MutableList<String> = mutableListOf()
+        val processArray: MutableList<ProcessUsage> = mutableListOf()
+        if (allUsers) {
+            getProcessesForAllUsers(childProcessList, processArray)
+        } else {
+            getProcessesForCurrentUser(childProcessList, user, processArray)
+        }
+        return processArray
+    }
+
+    private fun getProcessesForAllUsers(
+        childProcessList: MutableList<String>,
+        processArray: MutableList<ProcessUsage>
+    ) {
+        val process = Runtime.getRuntime().exec("pstree -p 1")
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
+        reader.readLines().forEach {
+            val regex = Regex("\\((\\d+)\\)")
+            val matchResult = regex.find(it)
+            matchResult?.groupValues?.get(1)
+            childProcessList.add(matchResult?.groupValues?.get(1) ?: "")
+        }
+        for (childProcess in childProcessList) {
+            val procDir = File("/proc")
+            val procFile = File(procDir, childProcess)
+            val statusFile = File(procFile, "status")
+            val pid = childProcess
+            if (statusFile.exists()) {
+                val statusLines = statusFile.readLines()
+                val nameLine = statusLines.firstOrNull { it.startsWith("Name:") }
+                val uidLine = statusLines.firstOrNull { it.startsWith("Uid:") }
+                val threadsLine = statusLines.firstOrNull { it.startsWith("Threads:") }
+                val memUsedLIne = statusLines.firstOrNull { it.startsWith("RssAnon:") }
+                val pPidLine = statusLines.firstOrNull { it.startsWith("PPid:") }
+                val uid = uidLine?.substringAfter("Uid:")?.trim()!!.split("\t")[0]
+                val name = nameLine?.substringAfter("Name:")?.trim()
+                val threads = threadsLine?.substringAfter("Threads:")?.trim()!!.split("\t")[0]
+                val pPid = pPidLine?.substringAfter("PPid:")?.trim()!!.split("\t")[0]
+                var memUsed: Double = 0.0
+                if (memUsedLIne != null) {
+                    memUsed = memUsedLIne.substringAfter("RssAnon:")?.trim()!!.split(" ")[0].toDouble()
+                }
+                if (name!!.contains(Regex(":+\\w*"))) {
+                } else if (pid != "1") {
+                    val uid = uidLine.substringAfter("Uid:")?.trim()!!.split("\t")[0]
+                    if (processArray[0].children?.firstOrNull { it.id == pPid.toInt() } != null) {
+                        processArray[0].children?.first { it.id == pPid.toInt() }?.children?.add(
+                            ProcessUsage(
+                                pid.toInt(),
+                                name,
+                                "${(memUsed / 1000)} Mb".replace(".", ","),
+                                threads,
+                                getUserByUid(uid.toInt()).second,
+                                mutableListOf()
+                            )
+                        )
+                    } else {
+                        processArray[0].children?.add(
+                            ProcessUsage(
+                                pid.toInt(),
+                                name,
+                                "${(memUsed / 1000)} Mb".replace(".", ","),
+                                threads,
+                                getUserByUid(uid.toInt()).second,
+                                mutableListOf()
+                            )
+                        )
+                    }
+                } else {
+                    processArray.add(
+                        ProcessUsage(
+                            pid.toInt(),
+                            name,
+                            "${(memUsed / 1000)} Mb".replace(".", ","),
+                            threads,
+                            getUserByUid(uid.toInt()).second,
+                            mutableListOf()
+                        )
+                    )
+                }
+            }
+
+        }
+    }
+
+    private fun getProcessesForCurrentUser(
+        childProcessList: MutableList<String>,
+        user: Pair<Int?, String>,
+        processArray: MutableList<ProcessUsage>
+    ) {
+        var process = Runtime.getRuntime().exec("ps -C systemd -o pid")
+        var reader = BufferedReader(InputStreamReader(process.inputStream))
+        val systemdPid = reader.readLines()[2].trim()
+        process = Runtime.getRuntime().exec("pstree -p $systemdPid")
+        reader = BufferedReader(InputStreamReader(process.inputStream))
+        reader.readLines().forEach {
+            val regex = Regex("\\((\\d+)\\)")
+            val matchResult = regex.find(it)
+            matchResult?.groupValues?.get(1)
+            childProcessList.add(matchResult?.groupValues?.get(1) ?: "")
+        }
+        for (childProcess in childProcessList) {
+            val procDir = File("/proc")
+            val procFile = File(procDir, childProcess)
+            val statusFile = File(procFile, "status")
+            val pid = childProcess
+            if (statusFile.exists()) {
+                val statusLines = statusFile.readLines()
+                val nameLine = statusLines.firstOrNull { it.startsWith("Name:") }
+                val uidLine = statusLines.firstOrNull { it.startsWith("Uid:") }
+                val threadsLine = statusLines.firstOrNull { it.startsWith("Threads:") }
+                val memUsedLIne = statusLines.firstOrNull { it.startsWith("RssAnon:") }
+                val pPidLine = statusLines.firstOrNull { it.startsWith("PPid:") }
+                val uid = uidLine?.substringAfter("Uid:")?.trim()!!.split("\t")[0]
+                val name = nameLine?.substringAfter("Name:")?.trim()
+                val threads = threadsLine?.substringAfter("Threads:")?.trim()!!.split("\t")[0]
+                val pPid = pPidLine?.substringAfter("PPid:")?.trim()!!.split("\t")[0]
+                var memUsed: Double = 0.0
+                if (memUsedLIne != null) {
+                    memUsed = memUsedLIne.substringAfter("RssAnon:")?.trim()!!.split(" ")[0].toDouble()
+                }
+                if (name!!.contains(Regex(":+\\w*"))) {
+                } else if (pid != systemdPid) {
+                    val uid = uidLine.substringAfter("Uid:")?.trim()!!.split("\t")[0]
+                    if (user.first.toString() == uid) {
+                        if (processArray[0].children?.firstOrNull { it.id == pPid.toInt() } != null) {
+                            processArray[0].children?.first { it.id == pPid.toInt() }?.children?.add(
+                                ProcessUsage(
+                                    pid.toInt(),
+                                    name,
+                                    "${(memUsed / 1000)} Mb".replace(".", ","),
+                                    threads,
+                                    getUserByUid(uid.toInt()).second,
+                                    mutableListOf()
+                                )
+                            )
+                        } else {
+                            processArray[0].children?.add(
+                                ProcessUsage(
+                                    pid.toInt(),
+                                    name,
+                                    "${(memUsed / 1000)} Mb".replace(".", ","),
+                                    threads,
+                                    getUserByUid(uid.toInt()).second,
+                                    mutableListOf()
+                                )
+                            )
+                        }
+                    }
+                } else {
+                    processArray.add(
+                        ProcessUsage(
+                            pid.toInt(),
+                            name,
+                            "${(memUsed / 1000)} Mb".replace(".", ","),
+                            threads,
+                            getUserByUid(uid.toInt()).second,
+                            mutableListOf()
+                        )
+                    )
+                }
+            }
+
+        }
     }
 }
