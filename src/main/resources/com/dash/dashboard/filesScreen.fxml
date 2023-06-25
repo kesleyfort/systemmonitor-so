@@ -6,26 +6,25 @@
 
 <AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dash.dashboard.FilesController">
    <children>
-      <Label layoutX="26.0" layoutY="8.0" prefHeight="31.0" prefWidth="361.0" text="INFO FILES">
+      <Label layoutX="88.0" layoutY="14.0" prefHeight="31.0" prefWidth="361.0" text="SISTEMA DE ARQUIVOS">
          <font>
             <Font size="26.0" />
          </font>
       </Label>
       <Button layoutX="884.0" layoutY="681.0" onAction="#voltarParaTelaPrincipal" text="Voltar para a Tela Principal" />
-      <TableView fx:id="FileTable" layoutX="673.0" layoutY="39.0" prefHeight="314.0" prefWidth="437.0">
+      <TableView fx:id="FileTable" layoutX="800.0" layoutY="60.0" prefHeight="386.0" prefWidth="437.0">
         <columns>
           <TableColumn fx:id="nameFile" prefWidth="145.0" text="NOME" />
          <TableColumn fx:id="totalSizeFile" prefWidth="128.0" text="ESPAÇO TOTAL" />
            <TableColumn fx:id="usedSizeFile" prefWidth="170.0" text="ESPAÇO USADO" />
-            <TableColumn fx:id="permissionFIle" prefWidth="200.0" text="PERMISSÕES" />
+            <TableColumn fx:id="mountedFile" prefWidth="200.0" text="MONTADO EM" />
         </columns>
       </TableView>
-     <TreeTableView fx:id="tree" layoutX="461.0" layoutY="421.0" prefHeight="211.0" prefWidth="625.0">
+     <TreeTableView fx:id="tree" layoutX="20.0" layoutY="60.0" prefHeight="537.0" prefWidth="714.0">
         <columns>
 
 
         </columns>
       </TreeTableView>
-      <TreeView fx:id="simpleTree" layoutX="35.0" layoutY="57.0" prefHeight="481.0" prefWidth="392.0" />
    </children>
 </AnchorPane>

@@ -7,14 +7,13 @@ import javafx.scene.control.Label
 import javafx.stage.Stage
 
 class MainWindow : Application() {
-    //Criando uma 'cache'que armaze todas as telas do dashboard para a navegação do projeto
-    private lateinit var secundaryStage: Stage
+
     private lateinit var mainScene: Scene
-    private lateinit var fileScreen: Scene
+
     override fun start(stage: Stage) {
-        secundaryStage=stage
-        //val fxmlLoader = FXMLLoader(MainWindow::class.java.getResource("mainWindow.fxml"))
-        val fxmlLoader = FXMLLoader(MainWindow::class.java.getResource("filesScreen.fxml"))
+
+        val fxmlLoader = FXMLLoader(MainWindow::class.java.getResource("mainWindow.fxml"))
+
         mainScene=Scene(fxmlLoader.load())
 
 
