@@ -8,13 +8,20 @@ import com.dash.dashboard.system.Memory
 import com.dash.dashboard.system.Process
 import com.dash.dashboard.system.Storage
 import javafx.application.Platform
+import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.geometry.Insets
+import javafx.geometry.Pos
+import javafx.scene.Scene
 import javafx.scene.chart.LineChart
 import javafx.scene.chart.XYChart
 import javafx.scene.chart.XYChart.Series
 import javafx.scene.control.*
+import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.control.cell.TreeItemPropertyValueFactory
+import javafx.scene.layout.VBox
+import javafx.stage.Stage
 import java.math.RoundingMode
 import java.net.URL
 import java.text.DecimalFormat
@@ -90,7 +97,12 @@ class MainWindowController : Initializable {
      * Sleep do gráfico é atualizado dependendo do valor selecionado no comboBox de intervalo.
      */
     private fun setUpProcessTable() {
-
+        processTable.setOnMouseClicked {
+            if (it.clickCount == 2) {
+                val process: TreeItem<ProcessUsage> = processTable.selectionModel.selectedItem
+                createProcessDetailsWindow(process)
+            }
+        }
         val t = Thread {
             while (true) {
                 val allUsers = checkboxProcessos.isSelected
@@ -98,7 +110,6 @@ class MainWindowController : Initializable {
                 val root: TreeItem<ProcessUsage> = TreeItem<ProcessUsage>(
                    processData[0]
                 )
-//                processData.removeAt()
                 root.isExpanded = true
                 for(process in processData[0].children!!) {
                     root.children.add(TreeItem(process))
@@ -127,6 +138,61 @@ class MainWindowController : Initializable {
         t.isDaemon = true
         t.start()
     }
+
+    private fun createProcessDetailsWindow(item: TreeItem<ProcessUsage>) {
+        val crudeProcessData = Process().getDataForSpecificProcess(item.value.id.toString())
+        val newWindow = Stage()
+        var container: VBox
+        newWindow.let {
+            it.title = "Detalhes do processo ${item.value.processName} "
+            it.height = 500.0
+            it.width = 450.0
+        }
+        if(!item.value.children.isNullOrEmpty()){
+            val tableView: TableView<ProcessUsage> = TableView()
+            val pidCol: TableColumn<ProcessUsage, String> = TableColumn("Pid")
+            val nomeCol: TableColumn<ProcessUsage, String> = TableColumn("Processo")
+            val usuarioCol: TableColumn<ProcessUsage, Int> = TableColumn("Usuário")
+            val threadsCol: TableColumn<ProcessUsage, Double> = TableColumn("Threads")
+            val memoriaCol: TableColumn<ProcessUsage, Double> = TableColumn("Memória")
+            pidCol.cellValueFactory = PropertyValueFactory("id")
+            nomeCol.cellValueFactory = PropertyValueFactory("processName")
+            memoriaCol.cellValueFactory = PropertyValueFactory("memUsed")
+            threadsCol.cellValueFactory = PropertyValueFactory("threads")
+            usuarioCol.cellValueFactory = PropertyValueFactory("user")
+            tableView.columns.addAll(pidCol, nomeCol, memoriaCol, threadsCol,usuarioCol)
+            tableView.items = FXCollections.observableArrayList(item.value.children)
+            container = VBox(
+                Label("Nome: " + item.value.processName),
+                Label("Memória usada: " + item.value.memUsed),
+                Label("Threads: " + item.value.threads),
+                Label("Dono do processo: " + item.value.user),
+                Label("Pid pai: " + crudeProcessData.first),
+                Label("Estado do processo: " + crudeProcessData.second),
+                Label("Uso de CPU: ${crudeProcessData.third}%"),
+                Label("Filhos:"),
+                tableView
+            )
+        }
+        else{
+            container = VBox(
+                Label("Nome: " + item.value.processName),
+                Label("Memória usada: " + item.value.memUsed),
+                Label("Threads: " + item.value.threads),
+                Label("Dono do processo: " + item.value.user),
+                Label("Pid Pai: " + crudeProcessData.first),
+                Label("Estado do processo: " + crudeProcessData.second),
+                Label("Uso de CPU: " + crudeProcessData.third),
+            )
+        }
+
+        container.spacing = 15.0
+        container.padding = Insets(25.0)
+        container.alignment = Pos.TOP_LEFT
+        newWindow.scene = Scene(container)
+        newWindow.show()
+    }
+
     /**
     * Função atualiza a barra de progresso da seção storage
     **/

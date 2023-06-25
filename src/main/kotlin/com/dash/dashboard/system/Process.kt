@@ -47,8 +47,7 @@ class Process {
     }
 
     private fun getProcessesForAllUsers(
-        childProcessList: MutableList<String>,
-        processArray: MutableList<ProcessUsage>
+        childProcessList: MutableList<String>, processArray: MutableList<ProcessUsage>
     ) {
         val process = Runtime.getRuntime().exec("pstree -p 1")
         val reader = BufferedReader(InputStreamReader(process.inputStream))
@@ -76,34 +75,12 @@ class Process {
                 val pPid = pPidLine?.substringAfter("PPid:")?.trim()!!.split("\t")[0]
                 var memUsed: Double = 0.0
                 if (memUsedLIne != null) {
-                    memUsed = memUsedLIne.substringAfter("RssAnon:")?.trim()!!.split(" ")[0].toDouble()
+                    memUsed = memUsedLIne.substringAfter("RssAnon:").trim().split(" ")[0].toDouble()
                 }
                 if (name!!.contains(Regex(":+\\w*"))) {
                 } else if (pid != "1") {
-                    val uid = uidLine.substringAfter("Uid:")?.trim()!!.split("\t")[0]
-                    if (processArray[0].children?.firstOrNull { it.id == pPid.toInt() } != null) {
-                        processArray[0].children?.first { it.id == pPid.toInt() }?.children?.add(
-                            ProcessUsage(
-                                pid.toInt(),
-                                name,
-                                "${(memUsed / 1000)} Mb".replace(".", ","),
-                                threads,
-                                getUserByUid(uid.toInt()).second,
-                                mutableListOf()
-                            )
-                        )
-                    } else {
-                        processArray[0].children?.add(
-                            ProcessUsage(
-                                pid.toInt(),
-                                name,
-                                "${(memUsed / 1000)} Mb".replace(".", ","),
-                                threads,
-                                getUserByUid(uid.toInt()).second,
-                                mutableListOf()
-                            )
-                        )
-                    }
+                    val uid = uidLine.substringAfter("Uid:").trim().split("\t")[0]
+                    createProcessTree(processArray, pPid, pid, name, memUsed, threads, uid)
                 } else {
                     processArray.add(
                         ProcessUsage(
@@ -121,10 +98,14 @@ class Process {
         }
     }
 
+    /**
+     * Função criada para pegar os processos do usuário logado. Para o usuário logado, o systemd é pai de todos os processos da sessão, então começamos
+     * pegando o pid deste processo e, a partir daí, seguimos adicionando seus filhos e filhos de seus filhos.
+     * A função recebe uma lista com todos os processos filhos do systemd, um pair com id e nome do usuário logado e um array para que sejam adicionados os
+     * dados dos processos.
+     */
     private fun getProcessesForCurrentUser(
-        childProcessList: MutableList<String>,
-        user: Pair<Int?, String>,
-        processArray: MutableList<ProcessUsage>
+        childProcessList: MutableList<String>, user: Pair<Int?, String>, processArray: MutableList<ProcessUsage>
     ) {
         var process = Runtime.getRuntime().exec("ps -C systemd -o pid")
         var reader = BufferedReader(InputStreamReader(process.inputStream))
@@ -155,35 +136,13 @@ class Process {
                 val pPid = pPidLine?.substringAfter("PPid:")?.trim()!!.split("\t")[0]
                 var memUsed: Double = 0.0
                 if (memUsedLIne != null) {
-                    memUsed = memUsedLIne.substringAfter("RssAnon:")?.trim()!!.split(" ")[0].toDouble()
+                    memUsed = memUsedLIne.substringAfter("RssAnon:").trim().split(" ")[0].toDouble()
                 }
                 if (name!!.contains(Regex(":+\\w*"))) {
                 } else if (pid != systemdPid) {
-                    val uid = uidLine.substringAfter("Uid:")?.trim()!!.split("\t")[0]
+                    val uid = uidLine.substringAfter("Uid:").trim().split("\t")[0]
                     if (user.first.toString() == uid) {
-                        if (processArray[0].children?.firstOrNull { it.id == pPid.toInt() } != null) {
-                            processArray[0].children?.first { it.id == pPid.toInt() }?.children?.add(
-                                ProcessUsage(
-                                    pid.toInt(),
-                                    name,
-                                    "${(memUsed / 1000)} Mb".replace(".", ","),
-                                    threads,
-                                    getUserByUid(uid.toInt()).second,
-                                    mutableListOf()
-                                )
-                            )
-                        } else {
-                            processArray[0].children?.add(
-                                ProcessUsage(
-                                    pid.toInt(),
-                                    name,
-                                    "${(memUsed / 1000)} Mb".replace(".", ","),
-                                    threads,
-                                    getUserByUid(uid.toInt()).second,
-                                    mutableListOf()
-                                )
-                            )
-                        }
+                        createProcessTree(processArray, pPid, pid, name, memUsed, threads, uid)
                     }
                 } else {
                     processArray.add(
@@ -200,5 +159,57 @@ class Process {
             }
 
         }
+    }
+
+    private fun createProcessTree(
+        processArray: MutableList<ProcessUsage>,
+        pPid: String,
+        pid: String,
+        name: String?,
+        memUsed: Double,
+        threads: String,
+        uid: String
+    ) {
+        if (processArray[0].children?.firstOrNull { it.id == pPid.toInt() } != null) {
+            processArray[0].children?.first { it.id == pPid.toInt() }?.children?.add(
+                ProcessUsage(
+                    pid.toInt(),
+                    name,
+                    "${(memUsed / 1000)} Mb".replace(".", ","),
+                    threads,
+                    getUserByUid(uid.toInt()).second,
+                    mutableListOf()
+                )
+            )
+        } else {
+            processArray[0].children?.add(
+                ProcessUsage(
+                    pid.toInt(),
+                    name,
+                    "${(memUsed / 1000)} Mb".replace(".", ","),
+                    threads,
+                    getUserByUid(uid.toInt()).second,
+                    mutableListOf()
+                )
+            )
+        }
+    }
+
+    fun getDataForSpecificProcess(id: String): Triple<String, String, String> {
+        val procDir = File("/proc")
+        val procFile = File(procDir, id)
+        val statusFile = File(procFile, "status")
+        if (statusFile.exists()) {
+            val statusLines = statusFile.readLines()
+            val stateLine = statusLines.firstOrNull { it.startsWith("State:") }
+            val pPidLine = statusLines.firstOrNull { it.startsWith("PPid:") }
+            val pPid = pPidLine?.substringAfter("PPid:")?.trim()!!.split("\t")[0]
+            val state = stateLine?.substringAfter("State:")?.trim()!!.split("\t")[0]
+            val process = Runtime.getRuntime().exec("ps -p $id -o %cpu")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val cpuUsage = reader.readLines()[1].trim()
+            return Triple(pPid, state, cpuUsage)
+        }
+        return Triple("", "", "")
     }
 }
