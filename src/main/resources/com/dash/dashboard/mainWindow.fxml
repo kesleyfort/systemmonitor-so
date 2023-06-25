@@ -86,13 +86,14 @@
           </ChoiceBox>
       </buttons>
     </ButtonBar>
-    <TableView fx:id="processTable" layoutX="753.0" layoutY="65.0" prefHeight="674.0" prefWidth="513.0">
-      <columns>
-          <TableColumn fx:id="idCol" minWidth="1.0" prefWidth="62.0" text="ID" />
-          <TableColumn fx:id="processCol" prefWidth="236.0" text="Processo" />
-          <TableColumn fx:id="memCol" prefWidth="83.0" text="Memoria" />
-          <TableColumn fx:id="threadsCol" prefWidth="57.0" text="Threads" />
-          <TableColumn fx:id="userCol" prefWidth="74.0" text="Usuário" />
-      </columns>
-    </TableView>
+   <CheckBox fx:id="checkboxProcessos" layoutX="753.0" layoutY="34.0" mnemonicParsing="false" text="Visualizar processos de todos os usuarios" />
+   <TreeTableView fx:id="processTable" layoutX="752.0" layoutY="70.0" prefHeight="678.0" prefWidth="522.0">
+     <columns>
+       <TreeTableColumn fx:id="idCol" prefWidth="113.0" text="Id" />
+       <TreeTableColumn fx:id="processCol" prefWidth="158.0" text="Nome" />
+         <TreeTableColumn fx:id="memCol" prefWidth="78.0" text="Memória" />
+         <TreeTableColumn fx:id="threadsCol" prefWidth="74.0" text="Threads" />
+         <TreeTableColumn fx:id="userCol" prefWidth="98.0" text="Usuário" />
+     </columns>
+   </TreeTableView>
 </AnchorPane>
