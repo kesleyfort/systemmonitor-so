@@ -10,7 +10,9 @@ import com.dash.dashboard.system.Storage
 import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.fxml.FXML
+import javafx.fxml.FXMLLoader
 import javafx.fxml.Initializable
+import javafx.scene.Parent
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Scene
@@ -73,15 +75,29 @@ class MainWindowController : Initializable {
 
     @FXML // fx:id="totalMemLabel"
     private lateinit var maxSpeed: Label
+    var sleep = 5000L
 
     @FXML // fx:id="checkboxProcessos"
     private lateinit var checkboxProcessos: CheckBox
 
-    private var sleep = 5000L
     private var chartCounter = 0
     private var cpuChartCounter = 0
 
+    @FXML
+    fun goToFilesInfo() {
+        val stage = Stage()
+        val loader = FXMLLoader(javaClass.getResource("filesScreen.fxml"))
+        val root: Parent = loader.load()
+        val scene = Scene(root)
 
+        val controller = loader.getController<FilesController>()
+        controller.setTelaPrincipalStage(stage)
+
+        stage.title = "Arquivos"
+        stage.scene = scene
+        stage.show()
+
+    }
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         intervaloComboBox.items.setAll("5 Segundos", "10 Segundos", "15 segundos")
         setUpMemData()
@@ -142,7 +158,7 @@ class MainWindowController : Initializable {
     private fun createProcessDetailsWindow(item: TreeItem<ProcessUsage>) {
         val crudeProcessData = Process().getDataForSpecificProcess(item.value.id.toString())
         val newWindow = Stage()
-        var container: VBox
+        val container: VBox
         newWindow.let {
             it.title = "Detalhes do processo ${item.value.processName} "
             it.height = 500.0
