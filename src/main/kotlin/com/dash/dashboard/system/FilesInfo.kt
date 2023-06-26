@@ -102,8 +102,10 @@ class FilesInfo {
         val directory = File(d.absolutePath)
         val totalsize = formatBytes(getFileSize(directory))
 
-        val lastModified = getModifiedDate(directory)
-        val permission = Files.getPosixFilePermissions(directory.toPath()).toString()
+        val attrs = Files.readAttributes(d.toPath(), PosixFileAttributes::class.java)
+        val permission = attrs.permissions().toString()
+        val crudeDate = attrs.lastModifiedTime().toString().replace(Regex("(\\.\\d+Z|Z\\.\\d+|Z)"), "")
+        val lastModified = convertDateFormat(crudeDate)
 
         val directoryNode = TreeItem(
             FilesController.FileAttributes(
@@ -115,26 +117,31 @@ class FilesInfo {
             )
         )
        val files = directory.listFiles { _, name -> !name.startsWith(".") || !name.contains("snap") }
-
         files?.forEach  { file ->
             val fileSize = getFileSize(file)
             val sizeTotal = formatBytes(fileSize)
-            val fileNode = if (file.isDirectory && !file.name.startsWith(".") && !file.name.contains("snap")) {
-                createDirectoryNode(file)
-            } else {
-                val attrs = Files.readAttributes(file.toPath(), PosixFileAttributes::class.java)
-                val permission = attrs.permissions().toString()
-                val lastModified = convertDateFormat(attrs.lastModifiedTime().toString().replace(Regex("\\.\\w*"), ""))
-                TreeItem(
-                    FilesController.FileAttributes(
-                        file.name,
-                        file.isDirectory,
-                        permission,
-                        lastModified,
-                        sizeTotal
+            var fileNode: TreeItem<FilesController.FileAttributes> = TreeItem()
+            if(file.exists()){
+                fileNode = if (file.isDirectory && !file.name.startsWith(".") && !file.name.contains("snap")) {
+                    createDirectoryNode(file)
+                } else
+                {
+                    val attributes = Files.readAttributes(file.toPath(), PosixFileAttributes::class.java)
+                    val perm = attributes.permissions().toString()
+                    val date = attributes.lastModifiedTime().toString().replace(Regex("(\\.\\d+Z|Z\\.\\d+|Z)"), "")
+                    val lastmod = convertDateFormat(date)
+                    TreeItem(
+                        FilesController.FileAttributes(
+                            file.name,
+                            file.isDirectory,
+                            perm,
+                            lastmod,
+                            sizeTotal
+                        )
                     )
-                )
+                }
             }
+
             directoryNode.children.add(fileNode)
         }
 

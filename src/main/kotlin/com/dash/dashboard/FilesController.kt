@@ -2,7 +2,6 @@ package com.dash.dashboard
 
 import com.dash.dashboard.models.FileData
 import com.dash.dashboard.system.FilesInfo
-import com.dash.dashboard.system.Memory
 import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.fxml.Initializable
@@ -12,8 +11,6 @@ import javafx.scene.control.cell.TreeItemPropertyValueFactory
 import javafx.stage.Stage
 import java.io.File
 import java.net.URL
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
 /***
@@ -52,44 +49,43 @@ class FilesController : Initializable {
     }
 
     private fun createFileTreeTable() {
-        val rootDirectory = File("/home/${System.getenv("USER")}/Pictures")
-        val t = Thread {
-            val rootNode = FilesInfo().createDirectoryNode(rootDirectory)
-            while (true) {
-                Platform.runLater {
-                    treeName = TreeTableColumn<FileAttributes, String>("NOME")
-                    treeName.cellValueFactory = TreeItemPropertyValueFactory("treeName")
-                    treeName.prefWidth = 200.0
+        val userDirectory = File("/home/${System.getenv("USER")}")
+        val rootNode = TreeItem(FileAttributes("/home/${System.getenv("USER")}", true, "", "", ""))
+        treeName = TreeTableColumn<FileAttributes, String>("Nome")
+        treeName.cellValueFactory = TreeItemPropertyValueFactory("treeName")
+        treeName.prefWidth = 200.0
 
-                    treeTotalSpace = TreeTableColumn("TAMANHO")
-                    treeTotalSpace.cellValueFactory = TreeItemPropertyValueFactory("treeTotalSpace")
+        treeTotalSpace = TreeTableColumn("Tamanho")
+        treeTotalSpace.cellValueFactory = TreeItemPropertyValueFactory("treeTotalSpace")
 
-                    treePermissions = TreeTableColumn("PERMISSÕES")
-                    treePermissions.cellValueFactory = TreeItemPropertyValueFactory("permissions")
+        treePermissions = TreeTableColumn("Permissões")
+        treePermissions.cellValueFactory = TreeItemPropertyValueFactory("permissions")
 
-                    lastModified = TreeTableColumn("ÚLTIMO ACESSO")
-                    lastModified.cellValueFactory = TreeItemPropertyValueFactory("lastModified")
+        lastModified = TreeTableColumn("Último acesso")
+        lastModified.cellValueFactory = TreeItemPropertyValueFactory("lastModified")
 
 
-                    tree.columns.addAll(
-                        treeName,
-                        treeTotalSpace,
-                        lastModified,
-                        treePermissions/*treePermissions treeSize, treeIsDirectory, treeLastModified*/
-                    )
-                    tree.isShowRoot = true
-                    tree.root = rootNode
+        tree.columns.addAll(
+            treeName,
+            treeTotalSpace,
+            lastModified,
+            treePermissions/*treePermissions treeSize, treeIsDirectory, treeLastModified*/
+        )
+        tree.isShowRoot = true
+        tree.root = rootNode
+        tree.root.isExpanded = true
+        val userDirectories = userDirectory.listFiles { file ->   file.isDirectory && !file.name.startsWith(".") && !file.name.contains("snap") }
+            userDirectories?.forEach {
+                val thread = Thread {
+                    val directory = FilesInfo().createDirectoryNode(it)
+                    Platform.runLater {
+                        tree.root.children.add(directory)
+                    }
                 }
-                try {
-                    Thread.sleep(MainWindowController().sleep)
-                } catch (ex: InterruptedException) {
-                    break
-                }
+                thread.name = "Thread for creating a tree node for ${it.name}"
+                thread.isDaemon = true
+                thread.start()
             }
-        }
-        t.name = "Files metadata table"
-        t.isDaemon = true
-        t.start()
     }
 
     fun setTelaPrincipalStage(stage: Stage) {
