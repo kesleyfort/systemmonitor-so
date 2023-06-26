@@ -1,16 +1,16 @@
 package com.dash.dashboard.system
+
 import com.dash.dashboard.FilesController
 import com.dash.dashboard.models.FileData
 import javafx.scene.control.TreeItem
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
-import java.nio.file.FileSystems
 import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.PosixFileAttributes
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class FilesInfo {
@@ -21,7 +21,7 @@ class FilesInfo {
      * informação sobre o tamanho total e usado, assim como o nome da partição e também onde é montada
      * E por último é adicionado em um lista que será usada na criação da tabela
      * */
-     fun getFilesystemInfo(): List<FileData> {
+    fun getFilesystemInfo(): List<FileData> {
 
         val filesystemInfo = mutableListOf<FileData>()
 
@@ -34,7 +34,14 @@ class FilesInfo {
         while (line != null) {
             val tokens = line.split("\\s+".toRegex())
 
-            filesystemInfo.add(FileData(name=tokens[0], TotalSpace = tokens[1], usedSpace = tokens[2] , mounted = tokens[5]))
+            filesystemInfo.add(
+                FileData(
+                    name = tokens[0],
+                    TotalSpace = tokens[1],
+                    usedSpace = tokens[2],
+                    mounted = tokens[5]
+                )
+            )
             line = reader.readLine()
         }
 
@@ -45,6 +52,7 @@ class FilesInfo {
 
         return filesystemInfo
     }
+
     /**A função [runCommand] executa um comando
      * do sistema operacional usando o interpretador Bash,
      *lê a saída do comando e retorna essa saída como uma string*/
@@ -62,12 +70,12 @@ class FilesInfo {
         return output.toString()
     }
 
-/***A função [getFileSize]obtém o tamanho de um arquivo especificado,
- * usando o comando du para obter o tamanho em bytes,
- * através do interpretador Bash
- * */
+    /***A função [getFileSize]obtém o tamanho de um arquivo especificado,
+     * usando o comando du para obter o tamanho em bytes,
+     * através do interpretador Bash
+     * */
     private fun getFileSize(file: File): Long {
-        val command = "du -sb ${file.absolutePath} | awk '{print \$1}'"
+        val command = "du -sb ${file.absolutePath.replace(" ", "\\ ")} | awk '{print \$1}'"
         val output = runCommand(command).trim()
         return output.toLongOrNull() ?: 0L
     }
@@ -92,37 +100,55 @@ class FilesInfo {
      * */
     fun createDirectoryNode(d: File): TreeItem<FilesController.FileAttributes> {
         val directory = File(d.absolutePath)
-        val totalsize = formatBytes(getFileSize( directory))
+        val totalsize = formatBytes(getFileSize(directory))
 
-        val lastModified=getModifiedDate(directory)
-        val permission=Files.getPosixFilePermissions(directory.toPath()).toString()
+        val lastModified = getModifiedDate(directory)
+        val permission = Files.getPosixFilePermissions(directory.toPath()).toString()
 
-        val directoryNode = TreeItem(FilesController.FileAttributes(directory.name, directory.isDirectory, permission, lastModified, totalsize))
+        val directoryNode = TreeItem(
+            FilesController.FileAttributes(
+                directory.name,
+                directory.isDirectory,
+                permission,
+                lastModified,
+                totalsize
+            )
+        )
+       val files = directory.listFiles { _, name -> !name.startsWith(".") || !name.contains("snap") }
 
-        val files = directory.listFiles()
-
-        if (files != null) {
-            for (file in files) {
-                val fileSize = getFileSize(file)
-                val sizeTotal = formatBytes(fileSize).toString()
-
-
-                val fileNode = if (file.isDirectory) {
-                    createDirectoryNode(file)
-                } else {
-                    val permission=Files.getPosixFilePermissions(file.toPath()).toString()
-                    val lastModified=getModifiedDate(file)
-                    TreeItem(FilesController.FileAttributes(file.name, file.isDirectory,permission, lastModified, sizeTotal))
-                }
-                directoryNode.children.add(fileNode)
+        files?.forEach  { file ->
+            val fileSize = getFileSize(file)
+            val sizeTotal = formatBytes(fileSize)
+            val fileNode = if (file.isDirectory && !file.name.startsWith(".") && !file.name.contains("snap")) {
+                createDirectoryNode(file)
+            } else {
+                val attrs = Files.readAttributes(file.toPath(), PosixFileAttributes::class.java)
+                val permission = attrs.permissions().toString()
+                val lastModified = convertDateFormat(attrs.lastModifiedTime().toString().replace(Regex("\\.\\w*"), ""))
+                TreeItem(
+                    FilesController.FileAttributes(
+                        file.name,
+                        file.isDirectory,
+                        permission,
+                        lastModified,
+                        sizeTotal
+                    )
+                )
             }
+            directoryNode.children.add(fileNode)
         }
 
         return directoryNode
     }
 
+    private fun convertDateFormat(input: String): String {
+        val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+        val outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
 
-
+        val dateTime = LocalDateTime.parse(input, inputFormatter)
+        val output = dateTime.format(outputFormatter)
+        return output
+    }
 
 
     private fun formatBytes(bytes: Long): String {
@@ -137,7 +163,6 @@ class FilesInfo {
 
         return String.format("%.2f %s", size, units[unitIndex])
     }
-
 
 
 }

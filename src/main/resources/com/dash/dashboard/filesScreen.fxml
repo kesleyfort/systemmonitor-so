@@ -6,18 +6,21 @@
 
 <AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dash.dashboard.FilesController">
    <children>
-      <Label layoutX="88.0" layoutY="14.0" prefHeight="31.0" prefWidth="361.0" text="SISTEMA DE ARQUIVOS">
+      <Label layoutX="85.0" layoutY="16.0" prefHeight="31.0" prefWidth="361.0" text="Sistema de arquivos">
          <font>
-            <Font size="26.0" />
+            <Font size="20.0" />
          </font>
       </Label>
-      <Button layoutX="884.0" layoutY="681.0" onAction="#voltarParaTelaPrincipal" text="Voltar para a Tela Principal" />
+      <Button layoutX="20.0" layoutY="10.0" onAction="#voltarParaTelaPrincipal" prefHeight="26.0" prefWidth="53.0" text="↤">
+         <font>
+            <Font size="20.0" />
+         </font></Button>
       <TableView fx:id="FileTable" layoutX="800.0" layoutY="60.0" prefHeight="386.0" prefWidth="437.0">
         <columns>
-          <TableColumn fx:id="nameFile" prefWidth="145.0" text="NOME" />
-         <TableColumn fx:id="totalSizeFile" prefWidth="128.0" text="ESPAÇO TOTAL" />
-           <TableColumn fx:id="usedSizeFile" prefWidth="170.0" text="ESPAÇO USADO" />
-            <TableColumn fx:id="mountedFile" prefWidth="200.0" text="MONTADO EM" />
+          <TableColumn fx:id="nameFile" prefWidth="145.0" text="Nome" />
+         <TableColumn fx:id="totalSizeFile" prefWidth="128.0" text="Espaço total" />
+           <TableColumn fx:id="usedSizeFile" prefWidth="170.0" text="Espaço usado" />
+            <TableColumn fx:id="mountedFile" prefWidth="200.0" text="Montado em" />
         </columns>
       </TableView>
      <TreeTableView fx:id="tree" layoutX="20.0" layoutY="60.0" prefHeight="537.0" prefWidth="714.0">

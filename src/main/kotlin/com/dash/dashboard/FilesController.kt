@@ -87,7 +87,7 @@ class FilesController : Initializable {
                 }
             }
         }
-        t.name = "Mem Data & Chart"
+        t.name = "Files metadata table"
         t.isDaemon = true
         t.start()
     }
@@ -102,10 +102,7 @@ class FilesController : Initializable {
         totalSizeFile.cellValueFactory = PropertyValueFactory("TotalSpace")
         usedSizeFile.cellValueFactory = PropertyValueFactory("usedSpace")
         mountedFile.cellValueFactory = PropertyValueFactory("mounted")
-
-        val directoryPath: Path = Paths.get("/")
         val partitionInfo = FilesInfo().getFilesystemInfo()
-
         FileTable.items = FXCollections.observableArrayList(partitionInfo)
 
 
